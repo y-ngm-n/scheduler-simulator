@@ -4,6 +4,7 @@
 #include <sys/msg.h>
 #include <sys/time.h>
 #include <csignal>
+#include <cstdlib>
 using namespace std;
 
 #define N 10  // process 개수
@@ -25,8 +26,17 @@ struct PCB {
   int cpuBurst;
 };
 
+PCB* readyQueue[N+1];
+
+
 // child process
 void child_process(int i) {
+
+  // determining CPU burst time
+  srand((unsigned int)time(NULL));
+  readyQueue[i]->cpuBurst = (rand()%10) + 1;
+
+  // message queue
   Message m;
   int msg_queue = msgget((key_t)MSG_KEY, 0666|IPC_CREAT);
   if (msg_queue==-1) {
@@ -36,12 +46,11 @@ void child_process(int i) {
 
   sleep(3);
 
-  // int result = msgrcv(msg_queue, &m, sizeof(Message)-sizeof(long), i, 0);
-  // cout << i << ": " << m.buffer << endl;
+  // recieve message
   while(true) {
     int result = msgrcv(msg_queue, &m, sizeof(Message)-sizeof(long), i, IPC_NOWAIT);
     if (result==-1) continue;
-    cout << i << ": " << m.buffer << endl;
+    cout << i << ": " << readyQueue[i]->cpuBurst << endl;
     break;
   }
 
@@ -51,7 +60,6 @@ void child_process(int i) {
 
 
 pid_t processes[N];
-PCB* readyQueue[N];
 int idx = 1;
 int msg_queue;
 
@@ -91,6 +99,7 @@ int main() {
     // parent process
     else {
       processes[i] = pid;
+      readyQueue[i+1]->pid = pid;
       cout << "[PARENT] created #" << i+1 << " " << processes[i] << endl;
     }
   }
