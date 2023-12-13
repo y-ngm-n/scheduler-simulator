@@ -167,8 +167,8 @@ int main() {
     readyQueue[i]->pid = pid;
 
     // determining CPU burst time
-    srand((unsigned int)time(NULL)+i);
-    int n = (rand()%10) + 2;
+    srand((unsigned int)time(NULL)*i);
+    int n = (rand()%10) + 1;
     readyQueue[i]->cpuBurst = n;
 
     // determining IO burst time
