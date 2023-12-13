@@ -9,13 +9,17 @@ using namespace std;
 // IPC message
 struct Message {
   long type;
-  int num;
-  char buffer[1024];
+  int flag;
 };
 
 int main() {
-  int msg_que = msgget((key_t)1234, 0666|IPC_CREAT);
-  if (msg_que==-1) {
+  int msg_queue_p = msgget((key_t)1234, 0666|IPC_CREAT);
+  if (msg_queue_p==-1) {
+    perror("msgget");
+    return -1;
+  }
+  int msg_queue_c = msgget((key_t)1235, 0666|IPC_CREAT);
+  if (msg_queue_c==-1) {
     perror("msgget");
     return -1;
   }
@@ -23,10 +27,20 @@ int main() {
   while(true) {
     sleep(1);
     Message m;
-    if (msgrcv(msg_que, &m, sizeof(Message)-sizeof(long), 0, IPC_NOWAIT)==-1) {
+    if (msgrcv(msg_queue_p, &m, sizeof(Message)-sizeof(long), 0, IPC_NOWAIT)==-1) {
       perror("msgrcv");
-      continue;
+      break;
     }
-    cout << m.type << ": " << m.buffer << endl;
+    cout << m.type << ": " << m.flag << endl;
+  }
+
+  while(true) {
+    sleep(1);
+    Message m;
+    if (msgrcv(msg_queue_c, &m, sizeof(Message)-sizeof(long), 0, IPC_NOWAIT)==-1) {
+      perror("msgrcv");
+      break;
+    }
+    cout << m.type << ": " << m.flag << endl;
   }
 }
